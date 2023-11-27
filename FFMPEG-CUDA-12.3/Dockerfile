@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # Update NVIDIA keys and sources as required for the specific CUDA and Ubuntu version
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
 
-# Install necessary dependencies
+# Install necessary dependencies and cleanup in the same step
 RUN apt-get update && apt-get install -y \
   build-essential \
   ca-certificates \
@@ -33,23 +33,29 @@ RUN apt-get update && apt-get install -y \
   libxcomposite1 \
   libxdamage1 \
   nasm \
+  nvidia-cuda-toolkit \
   pkgconf \
   unzip \
   wget \
   xdg-utils \
   yasm \
   zip \
-  zlib1g-dev
+  zlib1g-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Clone and install nv-codec-headers
-RUN git clone https://github.com/FFmpeg/nv-codec-headers.git && cd nv-codec-headers && git checkout n12.1.14.0 && make install && cd ..
+RUN git clone https://github.com/FFmpeg/nv-codec-headers.git && cd nv-codec-headers && git checkout n12.1.14.0 && make install && cd .. && rm -rf nv-codec-headers
 
 # Clone, configure, and install FFMPEG
 RUN git clone https://git.ffmpeg.org/ffmpeg.git && cd ffmpeg && git checkout n6.1 \
   && ./configure --enable-nonfree --enable-cuda --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-opencl --enable-gpl \
   --enable-libmp3lame --enable-libx264 --enable-libx265 --enable-libvpx \
   --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 \
-  && make -j$(nproc) && make install && cd .. && ffmpeg -codecs 
+  && make -j$(nproc) && make install && cd .. && rm -rf ffmpeg
 
-# Cleanup
-RUN rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* ./nv-codec-headers ./ffmpeg
+# Verify CUDA Toolkit installation
+RUN nvcc --version
+
+# Final cleanup if needed
+# Add any additional cleanup commands here if necessary

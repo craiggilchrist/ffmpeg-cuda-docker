@@ -1,5 +1,5 @@
 # Start with the FFMPEG CUDA base image.
-FROM craiggilchrist/ffmpeg-cuda:12.3
+FROM craiggilchrist/ffmpeg-cuda:12.3.1
 
 # Install .NET runtime
 RUN apt-get update \
